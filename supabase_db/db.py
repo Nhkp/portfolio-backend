@@ -30,7 +30,6 @@ def load_cv():
     if len(data.data) == 0:
         return None
     record = data.data[0]
-    print(type(record["filedata"]))
     record["filedata"] = base64.b64decode(record["filedata"].encode("utf-8"))
     return record
 
