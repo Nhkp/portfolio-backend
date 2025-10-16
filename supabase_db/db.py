@@ -11,30 +11,41 @@ key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 
-# pdf_path = "data/English_CV_2025.pdf"
+pdfs = {
+    "english_cv": {
+        "path" : "app/local_data/English_CV_2025.pdf",
+        "table_name": "cv",
+    },
+    "hyperparameter_article": {
+        "path": "/app/local_data/hyperparameters_analysis.pdf",
+        "table_name": "papers",
+    },
+    "openradioss_article": {
+        "path": "/app/local_data/openradioss_article_v2.pdf",
+        "table_name": "papers",
+    },
+}
 
-def store_cv(pdf_path: str = "data/English_CV_2025.pdf"):
+def store_pdf(table_name: str = "cv", pdf_path: str = "data/English_CV_2025.pdf"):
     if os.path.exists(pdf_path):
         with open(pdf_path, "rb") as f:
             pdf_bytes = f.read()
     pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
-    data = supabase.table("cv").insert({"id": 0, "filename": "English_CV_2025.pdf", "filedata": pdf_base64}).execute()
+    data = supabase.table(table_name).insert({"filename": os.path.basename(pdf_path), "filedata": pdf_base64}).execute()
 
     return data
-    # Assert we pulled real data.
-    assert len(data.data) > 0
 
-def load_cv():
-    data = supabase.table("cv").select("*").eq("id", 0).execute()
+def load_pdf(table_name: str = "cv", filename: str = None):
+    data = supabase.table(table_name).select("*").eq("filename", filename).execute()
     if len(data.data) == 0:
         return None
     record = data.data[0]
     record["filedata"] = base64.b64decode(record["filedata"].encode("utf-8"))
     return record
 
-def is_cv_already_stored():
-    data = supabase.table("cv").select("*").eq("id", 0).execute()
+def is_pdf_already_stored(table_name: str = "cv", filename: str = None):
+    data = supabase.table(table_name).select("*").eq("filename", filename).execute()
     return len(data.data) > 0
 
 
