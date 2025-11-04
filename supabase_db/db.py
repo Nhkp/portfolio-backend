@@ -13,7 +13,7 @@ supabase: Client = create_client(url, key)
 
 pdfs = {
     "english_cv": {
-        "path" : "app/local_data/English_CV_2025.pdf",
+        "path" : "/app/local_data/English_CV_2025.pdf",
         "table_name": "cv",
     },
     "hyperparameter_article": {
