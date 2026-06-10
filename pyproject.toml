@@ -4,10 +4,15 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.118.2",
-    "psycopg2-binary>=2.9.10",
-    "pybase64>=1.4.2",
+    "httpx>=0.28.1",
+    "psycopg[binary]>=3.2.13",
+    "python-multipart>=0.0.20",
     "python-dotenv>=1.1.1",
     "sqlalchemy>=2.0.43",
-    "supabase>=2.22.0",
     "uvicorn>=0.37.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
 ]
