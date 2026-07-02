@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.repositories import CVRepository
-from app.services import CVService, as_pdf_stream
+from app.repositories import CVRepository, PaperRepository
+from app.services import CVService, PaperService, as_pdf_stream
 from app.storage import CVStorage, get_cv_storage
 
 
@@ -25,6 +25,13 @@ def create_app() -> FastAPI:
     async def root() -> dict[str, str]:
         return {"message": "Hello World"}
 
+    @app.get("/api")
+    async def api_root() -> dict[str, object]:
+        return {
+            "message": "Portfolio Backend API",
+            "endpoints": ["/api/cv", "/api/paper/{filename}", "/health"],
+        }
+
     @app.get("/health")
     def health_check(db: Session = Depends(get_db)) -> dict[str, str]:
         try:
@@ -41,6 +48,17 @@ def create_app() -> FastAPI:
         service = CVService(CVRepository(db), storage)
         download = service.get_active_cv()
         headers = {"Content-Disposition": f'attachment; filename="{download.filename}"'}
+        return StreamingResponse(as_pdf_stream(download), media_type=download.content_type, headers=headers)
+
+    @app.get("/api/paper/{filename}")
+    def get_paper(
+        filename: str,
+        db: Session = Depends(get_db),
+        storage: CVStorage = Depends(get_cv_storage),
+    ) -> StreamingResponse:
+        service = PaperService(PaperRepository(db), storage)
+        download = service.get_paper(filename)
+        headers = {"Content-Disposition": f'inline; filename="{download.filename}"'}
         return StreamingResponse(as_pdf_stream(download), media_type=download.content_type, headers=headers)
 
     @app.put("/api/admin/cv", status_code=status.HTTP_201_CREATED)

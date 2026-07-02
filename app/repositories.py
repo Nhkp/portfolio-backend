@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import CVDocument
+from app.models import CVDocument, PaperDocument
 
 
 class CVRepository:
@@ -34,3 +34,11 @@ class CVRepository:
         self.db.add(document)
         self.db.flush()
         return document
+
+
+class PaperRepository:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def get_by_filename(self, filename: str) -> PaperDocument | None:
+        return self.db.scalar(select(PaperDocument).where(PaperDocument.filename == filename).limit(1))

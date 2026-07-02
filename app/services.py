@@ -7,7 +7,7 @@ from fastapi import HTTPException, UploadFile, status
 
 from app.config import Settings, get_settings
 from app.models import CVDocument
-from app.repositories import CVRepository
+from app.repositories import CVRepository, PaperRepository
 from app.storage import CVStorage
 
 
@@ -61,6 +61,20 @@ class CVService:
             size_bytes=len(content),
             checksum_sha256=checksum,
         )
+
+
+class PaperService:
+    def __init__(self, repository: PaperRepository, storage: CVStorage) -> None:
+        self.repository = repository
+        self.storage = storage
+
+    def get_paper(self, filename: str) -> CVDownload:
+        document = self.repository.get_by_filename(filename)
+        if document is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
+
+        content = self.storage.download_pdf(document.storage_bucket, document.storage_path)
+        return CVDownload(filename=document.filename, content_type=document.content_type, content=content)
 
 
 def as_pdf_stream(download: CVDownload) -> BytesIO:

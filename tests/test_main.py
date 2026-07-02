@@ -17,7 +17,7 @@ os.environ["ADMIN_API_KEY"] = "secret"
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.database import get_db
-from app.models import Base, CVDocument
+from app.models import Base, CVDocument, PaperDocument
 from app.storage import get_cv_storage
 from main import app
 
@@ -72,6 +72,15 @@ def test_read_main(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello World"}
+
+
+def test_api_root(client: TestClient) -> None:
+    response = client.get("/api")
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Portfolio Backend API",
+        "endpoints": ["/api/cv", "/api/paper/{filename}", "/health"],
+    }
 
 
 def test_can_api_removed(client: TestClient) -> None:
@@ -132,6 +141,38 @@ def test_get_cv_streams_active_cv(
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
+    assert response.content == b"%PDF-1.4"
+
+
+def test_get_paper_not_found(client: TestClient) -> None:
+    response = client.get("/api/paper/missing.pdf")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Paper not found"}
+
+
+def test_get_paper_streams_document(
+    client: TestClient,
+    db_session: Session,
+    fake_storage: FakeStorage,
+) -> None:
+    document = PaperDocument(
+        filename="paper.pdf",
+        content_type="application/pdf",
+        storage_bucket="papers",
+        storage_path="paper/paper.pdf",
+        size_bytes=8,
+        checksum_sha256="c" * 64,
+    )
+    db_session.add(document)
+    db_session.commit()
+    fake_storage.files[("papers", "paper/paper.pdf")] = b"%PDF-1.4"
+
+    response = client.get("/api/paper/paper.pdf")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == 'inline; filename="paper.pdf"'
     assert response.content == b"%PDF-1.4"
 
 
