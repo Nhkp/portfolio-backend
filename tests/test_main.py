@@ -74,6 +74,11 @@ def test_read_main(client: TestClient) -> None:
     assert response.json() == {"message": "Hello World"}
 
 
+def test_can_api_removed(client: TestClient) -> None:
+    response = client.get("/api/can/status")
+    assert response.status_code == 404
+
+
 def test_health_check_success() -> None:
     mock_db = MagicMock()
     mock_db.execute.return_value = None
